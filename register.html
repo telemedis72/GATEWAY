@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Register Gateway</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+</head>
+<body>
+  <div class="auth-container">
+    <h2>Register Gateway</h2>
+    <input type="text" id="register-name" placeholder="Nama Lengkap">
+    <input type="email" id="register-email" placeholder="Email">
+    <input type="password" id="register-password" placeholder="Password">
+    <button onclick="register()">Daftar</button>
+    <p>Sudah punya akun? <a href="index.html">Login</a></p>
+    <p id="register-error" class="error-message"></p>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
