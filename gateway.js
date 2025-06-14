@@ -1,10 +1,10 @@
-// Konfigurasi Firebase (gunakan konfigurasi milikmu)
+// Konfigurasi Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyAT1YuUSoKvAC_q1yxmB8Ggt4vR6f51Nkc",
   authDomain: "telemediss.firebaseapp.com",
   databaseURL: "https://telemediss-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "telemediss",
-  storageBucket: "telemediss.firebasestorage.app",
+  storageBucket: "telemediss.appspot.com",
   messagingSenderId: "96895220603",
   appId: "1:96895220603:web:fc4c9d8c3bb243a1155bde",
   measurementId: "G-RSN040MZWR"
@@ -14,31 +14,30 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
 // Elemen UI
-const btnMonitoring     = document.getElementById("btn-monitoring");
-const btnReceivers      = document.getElementById("btn-receivers");
-const btnNodes          = document.getElementById("btn-nodes");
-const btnNodeData       = document.getElementById("btn-node-data");
+const btnMonitoring = document.getElementById("btn-monitoring");
+const btnReceivers = document.getElementById("btn-receivers");
+const btnNodes = document.getElementById("btn-nodes");
+const btnNodeData = document.getElementById("btn-node-data");
 
 const monitoringSection = document.getElementById("monitoring-section");
-const receiversSection  = document.getElementById("receivers-section");
-const nodesSection      = document.getElementById("nodes-section");
-const nodeDataSection   = document.getElementById("node-data-section");
+const receiversSection = document.getElementById("receivers-section");
+const nodesSection = document.getElementById("nodes-section");
+const nodeDataSection = document.getElementById("node-data-section");
 
-const monitoringList    = document.getElementById("monitoring-list");
-const receiverList      = document.getElementById("receiver-list");
-const nodeList          = document.getElementById("node-list");
+const monitoringList = document.getElementById("monitoring-list");
+const receiverList = document.getElementById("receiver-list");
+const nodeList = document.getElementById("node-list");
 
-const newReceiverIdInput   = document.getElementById("new-receiver-id");
+const newReceiverIdInput = document.getElementById("new-receiver-id");
 const newReceiverKodeInput = document.getElementById("new-receiver-kode");
-const addReceiverBtn       = document.getElementById("add-receiver-btn");
+const addReceiverBtn = document.getElementById("add-receiver-btn");
 
 const newNodeIdInput = document.getElementById("new-node-id");
-const addNodeBtn     = document.getElementById("add-node-btn");
+const addNodeBtn = document.getElementById("add-node-btn");
 
-const nodeSelect       = document.getElementById("node-select");
-const nodeDataDisplay  = document.getElementById("node-data-display");
+const nodeSelect = document.getElementById("node-select");
+const nodeDataDisplay = document.getElementById("node-data-display");
 
-// Fungsi bantu untuk sembunyikan semua section
 function hideAllSections() {
   monitoringSection.classList.add("hidden");
   receiversSection.classList.add("hidden");
@@ -46,7 +45,6 @@ function hideAllSections() {
   nodeDataSection.classList.add("hidden");
 }
 
-// Cek autentikasi Firebase
 firebase.auth().onAuthStateChanged(user => {
   if (!user) {
     window.location.href = "login.html";
@@ -55,7 +53,6 @@ firebase.auth().onAuthStateChanged(user => {
 
   const currentUserID = user.uid;
 
-  // Tombol Navigasi
   btnMonitoring.onclick = () => {
     hideAllSections();
     monitoringSection.classList.remove("hidden");
@@ -82,19 +79,28 @@ firebase.auth().onAuthStateChanged(user => {
 
   // Tambah Receiver
   addReceiverBtn.onclick = () => {
-    const id   = newReceiverIdInput.value.trim();
+    const id = newReceiverIdInput.value.trim();
     const kode = newReceiverKodeInput.value.trim();
     if (!id || !kode) return alert("Lengkapi data");
 
-    db.ref("receiver/" + id).set({
-      owner: currentUserID,
-      kode_khusus: kode
-    }).then(() => {
-      alert("Receiver berhasil ditambahkan");
-      newReceiverIdInput.value = "";
-      newReceiverKodeInput.value = "";
-      loadReceivers();
-    }).catch(err => alert("Gagal tambah receiver: " + err.message));
+    db.ref("receiver/" + id).once("value", snap => {
+      if (snap.exists()) {
+        const owner = snap.val().owner;
+        if (owner && owner !== currentUserID) {
+          return alert("Receiver sudah dimiliki akun lain!");
+        }
+      }
+
+      db.ref("receiver/" + id).set({
+        owner: currentUserID,
+        kode_khusus: kode
+      }).then(() => {
+        alert("Receiver berhasil ditambahkan");
+        newReceiverIdInput.value = "";
+        newReceiverKodeInput.value = "";
+        loadReceivers();
+      }).catch(err => alert("Gagal tambah receiver: " + err.message));
+    });
   };
 
   // Tambah Node
@@ -102,14 +108,28 @@ firebase.auth().onAuthStateChanged(user => {
     const id = newNodeIdInput.value.trim();
     if (!id) return alert("Isi ID node");
 
-    db.ref("akun/" + currentUserID + "/nodes/" + id).set(true).then(() => {
-      alert("Node berhasil ditambahkan");
-      newNodeIdInput.value = "";
-      loadNodes();
-    }).catch(err => alert("Gagal tambah node: " + err.message));
+    // Cek apakah node sudah dimiliki akun lain
+    db.ref("akun").once("value", snap => {
+      let digunakan = false;
+      snap.forEach(child => {
+        if (child.key !== currentUserID && child.child("nodes").child(id).exists()) {
+          digunakan = true;
+        }
+      });
+
+      if (digunakan) {
+        return alert("Node sudah digunakan oleh akun lain!");
+      }
+
+      db.ref("akun/" + currentUserID + "/nodes/" + id).set(true).then(() => {
+        alert("Node berhasil ditambahkan");
+        newNodeIdInput.value = "";
+        loadNodes();
+      }).catch(err => alert("Gagal tambah node: " + err.message));
+    });
   };
 
-  // Load Receiver
+  // Load Receivers
   function loadReceivers() {
     receiverList.innerHTML = "Loading...";
     db.ref("receiver").orderByChild("owner").equalTo(currentUserID).once("value", snapshot => {
@@ -120,10 +140,10 @@ firebase.auth().onAuthStateChanged(user => {
       }
 
       snapshot.forEach(child => {
-        const r    = child.key;
+        const r = child.key;
         const kode = child.val().kode_khusus;
 
-        const div  = document.createElement("div");
+        const div = document.createElement("div");
         div.className = "receiver-item";
 
         const info = document.createElement("div");
@@ -165,7 +185,7 @@ firebase.auth().onAuthStateChanged(user => {
       }
 
       snapshot.forEach(child => {
-        const id  = child.key;
+        const id = child.key;
         const div = document.createElement("div");
         div.className = "node-item";
 
@@ -192,28 +212,42 @@ firebase.auth().onAuthStateChanged(user => {
     });
   }
 
-  // Load Data Monitoring Semua Node
+  // Load Monitoring hanya node milik akun ini
   function loadMonitoringData() {
     monitoringList.innerHTML = "Memuat...";
-    db.ref("data").once("value", snapshot => {
-      monitoringList.innerHTML = "";
-      if (!snapshot.exists()) {
-        monitoringList.innerHTML = "<i>Tidak ada data monitoring</i>";
+    db.ref("akun/" + currentUserID + "/nodes").once("value", nodeSnapshot => {
+      const nodeIDs = [];
+      nodeSnapshot.forEach(child => nodeIDs.push(child.key));
+
+      if (nodeIDs.length === 0) {
+        monitoringList.innerHTML = "<i>Tidak ada node terdaftar</i>";
         return;
       }
 
-      snapshot.forEach(child => {
-        const nodeID = child.key;
-        const data   = child.val();
+      db.ref("data").once("value", dataSnapshot => {
+        monitoringList.innerHTML = "";
 
-        const div = document.createElement("div");
-        div.innerHTML = `<strong>${nodeID}</strong>: <pre>${JSON.stringify(data, null, 2)}</pre>`;
-        monitoringList.appendChild(div);
+        let count = 0;
+
+        dataSnapshot.forEach(child => {
+          const nodeID = child.key;
+          if (nodeIDs.includes(nodeID)) {
+            const data = child.val();
+            const div = document.createElement("div");
+            div.innerHTML = `<strong>${nodeID}</strong>: <pre>${JSON.stringify(data, null, 2)}</pre>`;
+            monitoringList.appendChild(div);
+            count++;
+          }
+        });
+
+        if (count === 0) {
+          monitoringList.innerHTML = "<i>Tidak ada data untuk node Anda</i>";
+        }
       });
     });
   }
 
-  // Load Data Spesifik Per Node
+  // Load Pilihan Node
   function loadNodeOptions() {
     nodeSelect.innerHTML = "";
     db.ref("akun/" + currentUserID + "/nodes").once("value", snapshot => {
@@ -252,6 +286,6 @@ firebase.auth().onAuthStateChanged(user => {
     });
   }
 
-  // Load awal ke halaman Monitoring
+  // Load awal monitoring
   btnMonitoring.click();
 });
