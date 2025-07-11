@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>LoRa Receiver Dashboard</title>
+<link rel="stylesheet" href="gateway.css" />
+</head>
+<body>
+<header><h1>LoRa Receiver Dashboard</h1></header>
+
+<nav>
+  <button id="btn-monitoring">Monitoring</button>
+  <button id="btn-receivers">Daftar Receiver</button>
+  <button id="btn-nodes">Daftar Node</button>
+  <button id="btn-node-data">Lihat Data Node</button>
+</nav>
+
+<main>
+  <section id="monitoring-section" class="hidden">
+    <h2>Monitoring Data Node</h2>
+    <div id="monitoring-list"></div>
+  </section>
+
+  <section id="receivers-section" class="hidden">
+    <h2>Daftar Receiver</h2>
+    <input type="text" id="new-receiver-id" placeholder="receiverID" />
+    <input type="text" id="new-receiver-kode" placeholder="kode_khusus" />
+    <button id="add-receiver-btn">Tambah Receiver</button>
+    <div id="receiver-list"></div>
+    <div class="receiver-item">
+  <div class="receiver-info">
+
+  </section>
+
+  <section id="nodes-section" class="hidden">
+    <h2>Daftar Node</h2>
+    <input type="text" id="new-node-id" placeholder="Node ID" />
+    <button id="add-node-btn">Tambah Node</button>
+    <div id="node-list"></div>
+    <div class="node-item">
+  <div class="node-info">
+    
+  </section>
+
+  <section id="node-data-section" class="hidden">
+    <h2>Data Node Terpilih</h2>
+    <select id="node-select"></select>
+    <div id="node-data-display"></div>
+  </section>
+</main>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+<script src="gateway.js"></script>
+</body>
+</html>
