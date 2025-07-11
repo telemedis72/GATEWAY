@@ -78,7 +78,7 @@ function checkReceiverStatus(receiverId) {
 
     // Jika lebih dari 90 detik (90000 ms), set status offline
     // Lebih lama dari heartbeat ESP32 (30s) + buffer
-    if (timeDiff > 90000 && data.status === "online") {
+    if (timeDiff > 120000 && data.status === "online") {
       db.ref("receiver/" + receiverId + "/status").set("offline");
       console.log(`${receiverId} set to offline - no heartbeat for ${timeDiff}ms`);
     }
