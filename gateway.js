@@ -57,10 +57,10 @@ function startReceiverStatusMonitoring(receiverId) {
     clearInterval(receiverStatusCheckers[receiverId]);
   }
 
-  // Mulai monitoring setiap 60 detik (lebih lama dari heartbeat ESP32)
+  // Mulai monitoring setiap 15 detik
   receiverStatusCheckers[receiverId] = setInterval(() => {
     checkReceiverStatus(receiverId);
-  }, 60000); // 60 detik
+  }, 15000); // 15 detik
 
   // Jalankan pengecekan pertama kali
   checkReceiverStatus(receiverId);
@@ -76,10 +76,9 @@ function checkReceiverStatus(receiverId) {
     const currentTime = Date.now();
     const timeDiff = currentTime - lastSeen;
 
-    // Jika lebih dari 90 detik (90000 ms), set status offline
-    // Lebih lama dari heartbeat ESP32 (30s) + buffer
-    if (timeDiff > 150000 && data.status === "online") {
-      db.ref("receiver/" + receiverId + "/status").set("offline");
+    // Jika lebih dari 60 detik (60000 ms), set status offline
+    if (timeDiff > 60000 && data.status === "1") {
+      db.ref("receiver/" + receiverId + "/status").set("0");
       console.log(`${receiverId} set to offline - no heartbeat for ${timeDiff}ms`);
     }
   });
@@ -151,7 +150,7 @@ firebase.auth().onAuthStateChanged(user => {
       db.ref("receiver/" + id).set({
         owner: currentUserID,
         kode_khusus: kode,
-        status: "offline",
+        status: "0",
         lastSeen: 0
       }).then(() => {
         alert("Receiver berhasil ditambahkan");
@@ -208,7 +207,7 @@ firebase.auth().onAuthStateChanged(user => {
         const r      = child.key;
         const data   = child.val();
         const kode   = data.kode_khusus;
-        const status = data.status || "offline";
+        const status = data.status || "0";
         
         receiverIds.push(r);
 
@@ -221,7 +220,7 @@ firebase.auth().onAuthStateChanged(user => {
         info.innerHTML = `
           <div><strong>📡 receiverID:</strong> ${r}</div>
           <div><strong>🔐 kode_khusus:</strong> ${kode}</div>
-          <div><strong>📶 status:</strong> <span class="${status === 'online' ? 'status-online' : 'status-offline'}">${status}</span></div>`;
+          <div><strong>📶 status:</strong> <span class="${status === '1' ? 'status-online' : 'status-offline'}">${status === '1' ? 'online' : 'offline'}</span></div>`;
 
         const btnDel = document.createElement("button");
         btnDel.className = "delete-btn";
@@ -260,8 +259,8 @@ firebase.auth().onAuthStateChanged(user => {
               const statusSpan = receiverDiv.querySelector('.status-online, .status-offline');
               
               if (statusSpan) {
-                statusSpan.textContent = data.status || "offline";
-                statusSpan.className = data.status === 'online' ? 'status-online' : 'status-offline';
+                statusSpan.textContent = data.status === '1' ? 'online' : 'offline';
+                statusSpan.className = data.status === '1' ? 'status-online' : 'status-offline';
               }
             }
           }
